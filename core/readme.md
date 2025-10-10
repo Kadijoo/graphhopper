@@ -57,7 +57,8 @@ Nous avons choisi de travailler sur la classe :
    - Mutants tués :  
      - *replaced boolean return with false → KILLED*  
      - *replaced boolean return with true → KILLED*  
-     - *removed conditional - replaced equality check with true/false → KILLED*  
+     - *removed conditional - replaced equality check with true → KILLED*  
+     - *removed conditional - replaced equality check with false → KILLED*
    - Vérifie que `hasTurnCosts()` retourne bien `false` sans TurnCostProvider et `true` avec.
 
 **Score de mutation après les tests supplémentaires : 59%**  
