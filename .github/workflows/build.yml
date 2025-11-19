@@ -37,3 +37,50 @@ jobs:
       - name: Build ${{ matrix.java-version }}
         run: mvn -B clean test
 
+      # 👉 Étape PIT : mutation testing sur le module core, seulement pour Java 24
+      - name: Run PIT mutation tests on core (Java 24 only)
+        if: matrix.java-version == '24'
+        run: mvn -B -pl core -am -Ppitest org.pitest:pitest-maven:mutationCoverage
+
+      # 👉 Étape vérification : échouer si le score de mutation a baissé
+      - name: Check mutation score regression
+        if: matrix.java-version == '24'
+        run: |
+          BASELINE_FILE="ci/mutation-baseline.txt"
+
+          if [ ! -f "$BASELINE_FILE" ]; then
+            echo "Baseline file $BASELINE_FILE is missing. Failing the build."
+            exit 1
+          fi
+
+          BASELINE=$(cat "$BASELINE_FILE")
+          echo "Baseline mutation score : $BASELINE %"
+
+          # Rapport PIT pour le module core
+          REPORT_GLOB="core/target/pit-reports/*/index.html"
+          REPORT_FILE=$(ls $REPORT_GLOB 2>/dev/null | head -n 1 || true)
+
+          if [ -z "$REPORT_FILE" ]; then
+            echo "No PIT report found under $REPORT_GLOB"
+            exit 1
+          fi
+
+          echo "Using PIT report: $REPORT_FILE"
+
+          # Extraire le pourcentage "Mutation Coverage"
+          CURRENT=$(grep -hoP 'Mutation Coverage[^0-9]+\K[0-9]+' "$REPORT_FILE" | head -n 1 || true)
+
+          echo "Current mutation score  : ${CURRENT:-N/A} %"
+
+          if [ -z "$CURRENT" ]; then
+            echo "Could not parse current mutation score from PIT report."
+            exit 1
+          fi
+
+          # Comparaison numérique
+          if [ "$CURRENT" -lt "$BASELINE" ]; then
+            echo "Mutation score decreased from $BASELINE to $CURRENT. Failing the build."
+            exit 1
+          fi
+
+          echo "Mutation score is OK (no regression)."
