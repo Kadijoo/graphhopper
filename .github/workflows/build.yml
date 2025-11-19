@@ -34,8 +34,13 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/pom.xml', '**/package.json') }}
           restore-keys: |
             ${{ runner.os}}-node_modules-
-      - name: Build ${{ matrix.java-version }}
+      - name: Build & unit tests ${{ matrix.java-version }}
         run: mvn -B clean test
+
+      # ✅ NOUVELLE ÉTAPE : installer les modules pour que PIT trouve leurs JAR
+      - name: Install artifacts for PIT (Java 24 only)
+        if: matrix.java-version == '24'
+        run: mvn -B -DskipTests install  
 
       # 👉 Étape PIT : mutation testing sur le module core, seulement pour Java 24
       - name: Run PIT mutation tests on core (Java 24 only)
