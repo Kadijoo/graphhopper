@@ -17,6 +17,8 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <maven.compiler.target>17</maven.compiler.target>
+        <!-- utilisé par surefire/jacoco/pitest, on l'initialise à vide -->
+        <argLine></argLine>
 
         <!-- We always had this disabled as it is disabled by default in debian JDK builds, but when we
              switched to another JDK on travis it was enabled implicitly. Our javadocs are not ready for this
