@@ -75,20 +75,30 @@ jobs:
 
           echo "Using PIT report: $REPORT_FILE"
 
-          # On cherche une ligne contenant 'Mutation' et on en extrait le premier %
-          CURRENT=$(grep -i "Mutation" "$REPORT_FILE" | grep -oP '[0-9]+(?=%)' | head -n 1 || true)
+          # On passe la main à un petit script Python pour extraire le % de Mutation Coverage
+          export REPORT_FILE
+          export BASELINE
 
-          echo "Current mutation score  : ${CURRENT:-N/A} %"
+          python - << 'PY'
+          import os, re, sys, pathlib
 
-          if [ -z "$CURRENT" ]; then
-            echo "Could not parse current mutation score from PIT report."
-            exit 1
-          fi
+          report_path = pathlib.Path(os.environ["REPORT_FILE"])
+          baseline = int(os.environ["BASELINE"])
 
-          # Comparaison numérique
-          if [ "$CURRENT" -lt "$BASELINE" ]; then
-            echo "Mutation score decreased from $BASELINE to $CURRENT. Failing the build."
-            exit 1
-          fi
+          html = report_path.read_text(encoding="utf-8")
 
-          echo "Mutation score is OK (no regression)."
+          # On cherche "Mutation Coverage" puis le premier <td>XX%</td> après
+          m = re.search(r"Mutation Coverage.*?<td>(\d+)%", html, re.S)
+          if not m:
+            print("Could not find Mutation Coverage percentage in report.")
+            sys.exit(1)
+
+          current = int(m.group(1))
+          print(f"Current mutation score  : {current} %")
+
+          if current < baseline:
+            print(f"Mutation score decreased from {baseline} to {current}. Failing the build.")
+            sys.exit(1)
+
+          print("Mutation score is OK (no regression).")
+          PY
