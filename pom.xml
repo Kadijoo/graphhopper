@@ -373,5 +373,51 @@
                 </plugins>
             </build>
         </profile>
+
+        <!-- Profil PIT pour les tests de mutation -->
+        <profile>
+            <id>pitest</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-maven</artifactId>
+                        <version>1.22.0</version>
+
+                        <!-- Support JUnit 5 -->
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.pitest</groupId>
+                                <artifactId>pitest-junit5-plugin</artifactId>
+                                <version>1.2.3</version>
+                            </dependency>
+                        </dependencies>
+
+                        <configuration>
+                            <!-- On dit à PIT qu’on utilise JUnit 5 -->
+                            <testPlugin>junit5</testPlugin>
+
+                            <!-- Classes à muter -->
+                            <targetClasses>
+                                <param>com.graphhopper.*</param>
+                            </targetClasses>
+
+                            <!-- Tests à exécuter -->
+                            <targetTests>
+                                <param>com.graphhopper.*Test</param>
+                                <param>com.graphhopper.*IT</param>
+                            </targetTests>
+
+                            <threads>4</threads>
+                            <timestampedReports>false</timestampedReports>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
     </profiles>
 </project>
