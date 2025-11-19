@@ -61,19 +61,22 @@ jobs:
           BASELINE=$(cat "$BASELINE_FILE")
           echo "Baseline mutation score : $BASELINE %"
 
-          # Rapport PIT pour le module core
-          REPORT_GLOB="core/target/pit-reports/*/index.html"
-          REPORT_FILE=$(ls $REPORT_GLOB 2>/dev/null | head -n 1 || true)
+          # On essaie d'abord un index HTML global
+          if [ -f "core/target/pit-reports/index.html" ]; then
+            REPORT_FILE="core/target/pit-reports/index.html"
+          else
+            REPORT_FILE=$(find core/target/pit-reports -maxdepth 3 -name 'index.html' | head -n 1 || true)
+          fi
 
           if [ -z "$REPORT_FILE" ]; then
-            echo "No PIT report found under $REPORT_GLOB"
+            echo "No PIT report found under core/target/pit-reports"
             exit 1
           fi
 
           echo "Using PIT report: $REPORT_FILE"
 
-          # Extraire le pourcentage "Mutation Coverage"
-          CURRENT=$(grep -hoP 'Mutation Coverage[^0-9]+\K[0-9]+' "$REPORT_FILE" | head -n 1 || true)
+          # On cherche une ligne contenant 'Mutation' et on en extrait le premier %
+          CURRENT=$(grep -i "Mutation" "$REPORT_FILE" | grep -oP '[0-9]+(?=%)' | head -n 1 || true)
 
           echo "Current mutation score  : ${CURRENT:-N/A} %"
 
