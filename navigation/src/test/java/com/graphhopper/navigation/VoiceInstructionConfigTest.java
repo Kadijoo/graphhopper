@@ -1,5 +1,6 @@
 package com.graphhopper.navigation;
 
+import com.graphhopper.util.Translation;
 import com.graphhopper.util.TranslationMap;
 import org.junit.jupiter.api.Test;
 
@@ -7,6 +8,7 @@ import java.util.Locale;
 
 import static com.graphhopper.navigation.DistanceUtils.UnitTranslationKey.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 
 public class VoiceInstructionConfigTest {
@@ -212,5 +214,38 @@ public class VoiceInstructionConfigTest {
                                                VoiceInstructionConfig.VoiceInstructionValue values) {
         assertEquals(expectedSpokenDistance, values.spokenDistance);
         assertEquals(expectedInstruction, values.turnDescription);
+    }
+
+    @Test
+    void fixedDistanceConfig_returnsValueAndUsesTranslation() {
+        // Arrange
+        TranslationMap translationMap = mock(TranslationMap.class);
+        Translation translation = mock(Translation.class);
+        Locale locale = Locale.ENGLISH;
+
+        when(translationMap.getWithFallBack(locale)).thenReturn(translation);
+        when(translation.tr(anyString(), any())).thenReturn("Mocked text");
+
+        FixedDistanceVoiceInstructionConfig config =
+                new FixedDistanceVoiceInstructionConfig(
+                        "higher_distance",
+                        translationMap,
+                        locale,
+                        2000,   // distance le long de la géométrie (m)
+                        2       // valeur parlée (ex: "2 km")
+                );
+
+        // Act : distance supérieure au seuil -> instruction attendue
+        VoiceInstructionConfig.VoiceInstructionValue value =
+                config.getConfigForDistance(2500, "turn right", " then");
+
+        // Assert
+        assertNotNull(value, "On doit obtenir une instruction vocale");
+        assertEquals(2000, value.spokenDistance);
+        assertTrue(value.turnDescription.contains("Mocked text"));
+
+        // Vérifie que les mocks ont été utilisés
+        verify(translationMap).getWithFallBack(locale);
+        verify(translation).tr(anyString(), any());
     }
 }

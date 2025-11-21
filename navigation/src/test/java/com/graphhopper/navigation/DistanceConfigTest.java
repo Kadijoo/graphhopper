@@ -3,9 +3,16 @@ package com.graphhopper.navigation;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.util.Translation;
+import com.graphhopper.util.TranslationMap;
+
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.util.List;
+import java.util.Locale;
 
 public class DistanceConfigTest {
 
@@ -40,6 +47,36 @@ public class DistanceConfigTest {
         assertEquals(4, none.voiceInstructions.size());
         DistanceConfig biking = new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "biking");
         assertEquals(1, biking.voiceInstructions.size());
+    }
+    
+    @Test
+    void getVoiceInstructionsForDistance_usesTranslationMapAndTranslation() {
+        // Arrange : mocks des dépendances
+        TranslationMap translationMap = mock(TranslationMap.class);
+        Translation translation = mock(Translation.class);
+        Locale locale = Locale.ENGLISH;
+
+        when(translationMap.getWithFallBack(locale)).thenReturn(translation);
+        // On ne dépend pas du texte réel, donc on peut renvoyer une chaîne fixe
+        when(translation.tr(anyString(), any())).thenReturn("Mocked instruction");
+
+        DistanceConfig config = new DistanceConfig(
+                DistanceUtils.Unit.METRIC,
+                translationMap,
+                locale,
+                TransportationMode.CAR
+        );
+
+        // Act : on demande des instructions pour une distance où des annonces sont attendues
+        List<VoiceInstructionConfig.VoiceInstructionValue> instructions =
+                config.getVoiceInstructionsForDistance(2500, "turn left", "");
+
+        // Assert
+        assertNotNull(instructions);
+        assertFalse(instructions.isEmpty(), "On doit obtenir au moins une instruction vocale");
+        // Vérifie l'utilisation des mocks
+        verify(translationMap, atLeastOnce()).getWithFallBack(locale);
+        verify(translation, atLeastOnce()).tr(anyString(), any());
     }
 
 }
