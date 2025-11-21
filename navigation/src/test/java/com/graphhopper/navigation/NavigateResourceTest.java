@@ -26,9 +26,4 @@ public class NavigateResourceTest {
         assertEquals(100, bearings.get(1), .1);
     }
 
-    @Test
-    void shouldFailOnPurpose() {
-        assertEquals(1, 2);
-    }
-
 }
