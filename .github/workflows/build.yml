@@ -102,7 +102,10 @@ jobs:
 
           print("Mutation score is OK (no regression).")
           PY
-
-          - name: Rickroll on failure
-          if: failure()    # cette étape ne s'exécute que si une étape précédente a échoué
-          uses: darzu/random-rickroll@v1
+          
+          # Rickroll humoristique sur échec
+      - name: Rickroll on failure
+        if: failure()    # cette étape ne s'exécute que si une étape précédente a échoué
+        uses: TejasvOnly/random-rickroll@master
+        with:
+          percentage: '100'
